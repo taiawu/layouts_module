@@ -204,6 +204,9 @@ ui <- fluidPage(
     )
 )
 
+# stopifnot(is.reactive(data))
+# stopifnot(!is.reactive(filter))
+
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
@@ -242,4 +245,38 @@ server <- function(input, output) {
 # Run the application
 shinyApp(ui = ui, server = server)
 
+
+# histogramServer <- function(id) {
+#     moduleServer(id, function(input, output, session) {
+#         layout_raw <- reactive({
+#             req(input$file)
+#             tryCatch({ upload_layout(input$file$datapath)
+#             }, error  = function(e) {
+#                 shinyalert("Layout can't be read", "Please check layout format.")
+#             })
+#         })
+#         
+#         output$layout_table <- renderTable({ layout_raw()  })
+#         
+#         # layout plots
+#         output$color_by <- renderUI({ # this is reactive by nature of being a render call? it can accept, therefore, rt(), which is a reactive expression. Can we
+#             req(layout_raw())
+#             
+#             varSelectInput("color_by", label = "Color plate plot by",  # as select input
+#                            data = layout_raw() %>% select(-c(row, column, well, condition)),
+#                            selected = "conc") #get_simplest_var(layout_raw()))
+#             
+#         }) 
+#         
+#         output$plot <- renderPlot({
+#             req(layout_raw())
+#             # req(input$color_by)  # wait until input$color_by is created
+#             
+#             make_platemap_plot( data = layout_raw(),
+#                                 fill_var = conc, #!!input$color_by,
+#                                 plot_title = "Plate Map",
+#                                 alpha_var = NULL)
+#         })
+#     })
+# }
 
