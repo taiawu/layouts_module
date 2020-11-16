@@ -1,0 +1,125 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+
+upload_layout <- function(filepath){
+    # read file based on it's type
+    ext <- tools::file_ext(filepath)
+    raw <- switch(ext,
+           csv = read_csv(filepath, col_names = FALSE),
+           txt = read_tsv(filepath, col_names = FALSE),
+           xlsx = readxl::read_excel(filepath, col_names = FALSE),
+           xls = readxl::read_excel(filepath, col_names = FALSE),
+           validate("Invalid file type"))
+    
+    # handle files with or without the "Type" header
+    first_cell <- raw[1,1][[1]]
+    out <- switch(first_cell,
+               Type = raw[-1,],
+               raw)
+   
+   # convert into layout form
+   out %>%
+      set_names( c("variable", "row", .[1,][-c(1,2)])) %>%
+      filter(row %in% LETTERS[1:16]) %>%
+      discard(~all(is.na(.x)))  %>% # drop columns if everything is NA
+      filter_all(any_vars(!is.na(.))) %>% # drop empty rows
+      mutate_all(as.character) %>% # make all character, to prevent issues in pivot
+      pivot_longer(-c(variable, row), names_to = "column", values_to = "value") %>%
+      pivot_wider(names_from = variable, values_from = value) %>%
+      mutate(well = paste0(row, column)) %>% # make well column
+      unite(condition, -c(row, column, well), sep = "__", remove = FALSE) %>% # make condition column
+      filter(!across(-c(well, row, column, condition)) == "Empty") %>% # if all variables are "Empty",   wells
+      filter(!is.na(across(-c(well, row, column, condition))) == TRUE) %>% # if all variables are NA,   wells
+      mutate_all(parse_guess) # convert likely numeric variables to numeric
+}
+
+layout <- upload_layout("Exp0951--20201103_SP200_ISG15_layout2_blanks.csv")
+
+```
+
+```{r}
+       
+get_simplest_var <-  function(layout) {
+  layout %>%
+                    select(-c(row, column, well, condition))  %>%
+                    mutate_all(as.character) %>%
+                    pivot_longer(cols = everything(), names_to = "variable", values_to = "value") %>%
+                    group_by(variable) %>%
+                    summarise(count = n_distinct(value)) %>%
+                    filter(count == min(count)) %>%
+                    pull(variable) %>%
+                    unique() %>%
+                    as.character()
+  
+}
+```
+
+
+```{r}
+# new daughter layout function
+df_to_layout <- function(df, layout_type) {
+    df_m <-   set_names( df ,  c("type","row",as.numeric( df [1,-c(1,2)]))) %>%
+        . [ -1 , -1] %>%
+        reshape2::melt( . ,id.vars = "row") %>%
+        mutate( . , well = as_vector(map2( . $row,  . $variable, paste0)) ) %>%
+        set_names( . , c("row", "column", layout_type, "well"))
+    df_m
+}
+
+make_layout <- function( filename ) { # from path to raw layout to a final fomatted layout file
+    # read the layout file, and split each layout into an individual
+    layout_list <- data.table::fread( filename, header = TRUE) %>%
+        as_tibble() %>%
+        split( . ,  . $Type)
+    
+    # put into a merge-able form
+    layout <- df_to_layout(layout_list[[1]], names(layout_list)[[1]])[c(1,2,4)] # initialize the list
+    for (i in c(1:length(layout_list))) {
+        layout <- layout %>%
+            mutate("var" =  as_vector(df_to_layout(layout_list[[i]], layout_type = names(layout_list)[[i]])[3] )) %>% # append the column of interest
+            set_names(c(names(layout), names(layout_list)[[i]])) # rename based on the column of interest
+    }
+    layout <- layout %>%
+        unite("condition", c(4:ncol(.)), remove = FALSE) %>% # create a unique column, used to define groups after averaging
+        mutate_if(is.factor, as.character)
+    
+    layout
+}
+```
+
+```{r}
+old_layout <- make_layout("Exp0951--20201103_SP200_ISG15_layout.csv")
+old_layout
+
+df <- read_uploads("Exp0951--20201103_SP200_ISG15_layout2.csv")
+
+df <- read_csv("Exp0951--20201103_SP200_ISG15_layout2.csv")
+
+read_tsv("Exp0951--20201103_SP200_ISG15_layout2_blanks.txt", col_names = FALSE)
+read_csv("Exp0951--20201103_SP200_ISG15_layout2.csv", col_names = FALSE)
+readxl::read_excel("Exp0951--20201103_SP200_ISG15_layout.xlsx", col_names = FALSE)
+readxl::read_excel("Exp0951--20201103_SP200_ISG15_layout2.xlsx", col_names = FALSE)
+
+readxl::read_excel("Exp0951--20201103_SP200_ISG15_layout2_blanks.xlsx")
+read_csv("Exp0951--20201103_SP200_ISG15_layout2_blanks.csv")
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
