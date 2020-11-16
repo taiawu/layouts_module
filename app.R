@@ -148,92 +148,98 @@ layoutServer <- function(id) {
     })
 }
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
 
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-    layoutUI("layout1")
-    # Sidebar with a slider input for number of bins
-    # sidebarLayout(
-    #     sidebarPanel(
-    #         layoutUI("layout1")[[1]]
-    #     ),
-    # 
-    #     # Show a plot of the generated distribution
-    #     mainPanel(
-    #         layoutUI("layout1")[[2]],
-    #         layoutUI("layout1")[3],
-    #         layoutUI("layout1")[[4]]
-    #     )
-    # )
-)
-
-# Define server logic required to draw a histogram
-server <- function(input, output) {
-
-  layout_raw <-  layoutServer("layout1")
-
-}
-
+# 
 # # Define UI for application that draws a histogram
 # ui <- fluidPage(
 # 
 #     # Application title
 #     titlePanel("Old Faithful Geyser Data"),
-# 
+#     layoutUI("layout1")
 #     # Sidebar with a slider input for number of bins
-#     sidebarLayout(
-#         sidebarPanel(
-#             fileInput( "file", label = "",
-#                       placeholder = "Upload raw RFU data" ,
-#                       multiple = FALSE,
-#                       accept = c(".csv", ".tsv", ".xls", ".xlsx")),
-#         ),
-# 
-#         # Show a plot of the generated distribution
-#         mainPanel(
-#             uiOutput("color_by"),
-#             plotOutput("plot"),
-#             tableOutput("layout_table")
-#         )
-#     )
+#     # sidebarLayout(
+#     #     sidebarPanel(
+#     #         layoutUI("layout1")[[1]]
+#     #     ),
+#     # 
+#     #     # Show a plot of the generated distribution
+#     #     mainPanel(
+#     #         layoutUI("layout1")[[2]],
+#     #         layoutUI("layout1")[3],
+#     #         layoutUI("layout1")[[4]]
+#     #     )
+#     # )
 # )
 # 
 # # Define server logic required to draw a histogram
 # server <- function(input, output) {
 # 
-#     layout_raw <- reactive({
-#         req(input$file)
-#         tryCatch({ upload_layout(input$file$datapath)
-#         }, error  = function(e) {
-#             shinyalert("Layout can't be read", "Please check layout format.")
-#         })
-#     })
-#     
-#     output$layout_table <- renderTable({ layout_raw()  })
-#     
-#     # layout plots
-#     output$color_by <- renderUI({ # this is reactive by nature of being a render call? it can accept, therefore, rt(), which is a reactive expression. Can we
-#         req(layout_raw())
-# 
-#         varSelectInput("color_by", label = "Color plate plot by",  # as select input
-#                        data = layout_raw() %>% select(-c(row, column, well, condition)),
-#                        selected = get_simplest_var(layout_raw()))
-# 
-#     }) 
-#  
-#     output$plot <- renderPlot({
-#             req(layout_raw())
-#             req(input$color_by)  # wait until input$color_by is created
-# 
-#             make_platemap_plot( data = layout_raw(),
-#                                          fill_var = !!input$color_by,
-#                                          plot_title = "Plate Map",
-#                                          alpha_var = NULL)
-#     })
+#   layout_raw <-  layoutServer("layout1")
 # 
 # }
+# 
+# shinyApp(ui = ui, server = server)
+
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+
+    # Application title
+    titlePanel("Old Faithful Geyser Data"),
+
+    # Sidebar with a slider input for number of bins
+    sidebarLayout(
+        sidebarPanel(
+            fileInput( "file", label = "",
+                      placeholder = "Upload raw RFU data" ,
+                      multiple = FALSE,
+                      accept = c(".csv", ".tsv", ".xls", ".xlsx")),
+        ),
+
+        # Show a plot of the generated distribution
+        mainPanel(
+            uiOutput("color_by"),
+            plotOutput("plot"),
+            tableOutput("layout_table")
+        )
+    )
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+
+    layout_raw <- reactive({
+        req(input$file)
+        tryCatch({ upload_layout(input$file$datapath)
+        }, error  = function(e) {
+            shinyalert("Layout can't be read", "Please check layout format.")
+        })
+    })
+
+    output$layout_table <- renderTable({ layout_raw()  })
+
+    # layout plots
+    output$color_by <- renderUI({ # this is reactive by nature of being a render call? it can accept, therefore, rt(), which is a reactive expression. Can we
+        req(layout_raw())
+
+        varSelectInput("color_by", label = "Color plate plot by",  # as select input
+                       data = layout_raw() %>% select(-c(row, column, well, condition)),
+                       selected = get_simplest_var(layout_raw()))
+
+    })
+
+    output$plot <- renderPlot({
+            req(layout_raw())
+            req(input$color_by)  # wait until input$color_by is created
+
+            make_platemap_plot( data = layout_raw(),
+                                         fill_var = !!input$color_by,
+                                         plot_title = "Plate Map",
+                                         alpha_var = NULL)
+    })
+
+}
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
+
