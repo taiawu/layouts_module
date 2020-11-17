@@ -49,7 +49,7 @@ make_platemap_plot <- function( data, plot_title = "", fill_var, alpha_var = NUL
 
         # geom_point(aes(fill = !!fill_var, alpha = !!alpha_var), colour = "gray20", shape = 22, size = 5)
         geom_point(aes(fill = !!fill_var), colour = "gray20", shape = 22, size = 5) +
-        labs(title = plot_title)
+        labs(title = plot_title, fill = )
 
     if(all(check.numeric(data %>% select(!!fill_var) %>% as_vector()))){
         p <- p +
