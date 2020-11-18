@@ -26,6 +26,7 @@ text_style <- function( font = "'Avenir Next'",
 }
 
 header_text <- text_style(bold = TRUE, align = "center", size = 14) # text used for headers
+panel_text <- text_style(bold = FALSE, align = "center", size = 14) # text used for headers
 small_text <- text_style(bold = FALSE, align = "center", size = 10) # small text used for explanations
 button_text <- text_style(bold = TRUE, align = "center", size = 14)
 # example:
@@ -266,7 +267,7 @@ find_vars <- function(data, hide_vars) {
 
 
 selectLayoutColorServer <- function(id, data, 
-                                    hide_vars = c("row", "column", "well", "condition")) { # filter arg added here
+                                    hide_vars = c("row", "column", "well")) { # filter arg added here
   
   stopifnot(is.reactive(data))
   
@@ -291,4 +292,37 @@ selectLayoutColorServer <- function(id, data,
     )
     
   })
+}
+
+
+
+
+
+layout_instructionsUI <- function(id) {
+  instruction_text <- text_style(bold = FALSE, align = "center", size = 12) # text used for headers
+  tagList(
+    instruction_text("Recommended approach to DSF data analysis."),
+    instruction_text("Use the template below to create a layout file for your experiment. Each plate in the layout file defines a new experimental variable (e.g. compound, pH, concentration), with the varible name provided in the first column of the layout file. You can define any number of variables by adding additional plates to the layout file. Using this method, data can be visualized by user-defined variables (e.g. color by concentration)."),
+    instruction_text("Layouts are connected to data by well name, so your data must have a 'well' column to use this feature."),
+    instruction_text("For more template exmples information, see the instructions tab."),
+    downloadButton(NS(id,"sample_layout_file"), p("Download example layout", style = "font-family: 'Avenir Next'; font-size: 14px; color: black"), width = '100%', style="font-size: 14px; color: #00000; background-color: #fffff; border-color: #ffff")
+  )
+}
+
+
+
+download_example_layoutServer <- function(id) {
+  moduleServer(id, function(input, output, session) { # data path comes from "input"
+    
+    output$sample_layout_file <- downloadHandler(
+      filename = function() {
+        paste('dsfworld_example_layout.csv', sep='')
+      },
+      content = function(file) {
+        read_csv("dsfworld_example_layout.csv")
+        write.csv(read_csv("dsfworld_example_layout.csv"), file, row.names = FALSE, fileEncoding = "UTF-8")
+      }
+    )
+  })
+  
 }

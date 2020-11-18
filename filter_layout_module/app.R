@@ -3,8 +3,10 @@
 library(shinycssloaders)
 library(shinyalert)
 library(platetools)
+library(shinyBS) # collapse panels
 library(varhandle) # has check.numeric, used in the plate plots
 library(tidyverse)
+
 library(shiny)
 source("modules.R")
 
@@ -12,17 +14,29 @@ layoutApp <- function() {
     ui <- fluidPage(useShinyalert(),
                     sidebarLayout(
                         sidebarPanel(
+                            # header_text("Recommended: upload experimental layout"),
+                                uploadLayoutUI("data")[[1]], # upload panel,
+                                # bsCollapsePanel(panel_text("Layout instructions"),
+                                #                 layout_instructionsUI("layout_example1")),
+                                                
+
+                                
+                            
                             #### upload layout ####
-                            uploadLayoutUI("data")[[1]], # upload panel,
+                            bsCollapsePanel(p("Make plots", style = "font-family: 'Avenir Next'; font-size: 16px; color: black",align = "center"),
+                                            #### filter layout ####
+                                            bsCollapsePanel(
+                                                panel_text("Select data to plot"),
+                                            uiOutput("update_button"),
+                                            textOutput("n"), # number of remaining conditions
+                                            
+                                            ## put input filters in a well panel
+                                            wellPanel(style = "border:grey; overflow-y:scroll; max-height: 600px",
+                                                      filterUi("filter") # dynamic selectInputs
+                                            )) 
+                            )
                             
-                            #### filter layout ####
-                            uiOutput("update_button"),
-                            textOutput("n"), # number of remaining conditions
-                            
-                            ## put input filters in a well panel
-                            wellPanel(style = "border:grey; overflow-y:scroll; max-height: 600px",
-                                      filterUi("filter") # dynamic selectInputs
-                                      ) 
+
 
                         ),
 
@@ -68,8 +82,12 @@ layoutApp <- function() {
                          style="font-size: 14px; color: #00000; background-color: lightgrey; border-color: lightgrey")
 
         })
+        ### download a sample file
+        download_example_layoutServer("layout_example1")
 
     }
+    
+  
 
     shinyApp(ui, server)
 }
