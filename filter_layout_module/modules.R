@@ -73,7 +73,7 @@ get_var_order <-  function(layout) {
     mutate_all(as.character) %>%
     pivot_longer(cols = everything(), names_to = "variable", values_to = "value") %>%
     group_by(variable) %>%
-    summarise(count = n_distinct(value)) %>% # `summarise()` ungrouping output (override with `.groups` argument)
+    summarise(count = n_distinct(value), .groups = 'drop') %>% # .groups is experimental, so keep an eye on this line as dplyr advances see: https://stackoverflow.com/questions/62140483/how-to-interpret-dplyr-message-summarise-regrouping-output-by-x-override
     arrange(count) %>% 
     pull(variable) %>%
     unique() %>%
@@ -261,7 +261,7 @@ selectLayoutColorUI <- function(id) {
 # helper function for the server
 find_vars <- function(data, hide_vars) {
   data %>% 
-    select(-hide_vars) %>% # this could replace
+    select(-all_of(hide_vars)) %>% # this could replace
     get_var_order(.)
 }
 
